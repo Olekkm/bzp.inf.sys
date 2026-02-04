@@ -19,6 +19,8 @@ export class RusABC {
         this.maxKey = 32
     }
 
+    //gets key as integer from 1 to 32
+    //returns symbol (string) from abc
     getSymbol(key) {
         if (!Number.isInteger(key)) {
             throw new TypeError("key argument must be an integer")
@@ -28,18 +30,26 @@ export class RusABC {
             throw new RangeError("key is out of range")
         }
 
+
+        //console.log(typeof this.ABC[key])
         return this.ABC[key]
     }
 
 
-    //currently not working
+    //gets symbol from abc
+    //returns symbol's key in abc (number)
     getKey(RusABCsymbol) {
-        const keys = Object.values(this.ABC)
-        console.log(keys)
+        //const values = Object.keys(this.ABC)
+        const key = Object.keys(this.ABC).find(searchedKey => this.ABC[searchedKey] === RusABCsymbol)
+        if (key == undefined) { throw new Error("symbol was not found") }
 
-        return keys.find(key => object[key] === RusABCsymbol)
+        //console.log(typeof parseInt(key))
+        return parseInt(key)
     }
 
+
+    //gets key as integer from 1 to 32
+    //returns five symbols string that represents binary code of symbol  
     getCodeFromKey(key) {
         if (!Number.isInteger(key)) {
             throw new TypeError("key argument must be an integer")
@@ -53,10 +63,15 @@ export class RusABC {
 
 
         const bin = key.toString(2)
+        //console.log(typeof ("0".repeat(5 - bin.length) + bin))
         return "0".repeat(5 - bin.length) + bin
     }
 
+
+    //gets symbol from abc
+    //returns five symbols string that represents binary code of symbol 
     getCodeFromSymbol(RusABCsymbol) {
+        //console.log(typeof this.getCodeFromKey(this.getKey(RusABCsymbol)))
         return this.getCodeFromKey(this.getKey(RusABCsymbol))
     }
 }
