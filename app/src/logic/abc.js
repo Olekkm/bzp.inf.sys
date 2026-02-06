@@ -74,4 +74,58 @@ export class RusABC {
         //console.log(typeof this.getCodeFromKey(this.getKey(RusABCsymbol)))
         return this.getCodeFromKey(this.getKey(RusABCsymbol))
     }
+
+
+    //gets two symbols and returns 
+    //symbol with key value equal sum of input symbol's keys.
+    //if sum > 32 (ABC maximum) key repeats from start (e. g. "Я" + "Б" = "А")
+    summarizeSymbols(symbol_A, symbol_B) {
+        this.checkSymbolInAbc(symbol_A);
+        this.checkSymbolInAbc(symbol_B);
+
+        const sum = this.getKey(symbol_A) + this.getKey(symbol_B)
+
+        return this.getSymbol(sum > 32 ? sum - 32 : sum);
+    }
+
+
+    //gets two symbols and returns 
+    //symbol with key value equal difference between symbol_A's key and symbol_B's (symbol_A - symbol_B).
+    //if difference < 1 (ABC minimum) key goes from back (e. g. key = -3 is equal to key = 29)
+    subtractSymbols(symbol_A, symbol_B) {
+        this.checkSymbolInAbc(symbol_A);
+        this.checkSymbolInAbc(symbol_B);
+
+        const subst = this.getKey(symbol_A) - this.getKey(symbol_B)
+
+        return this.getSymbol(subst < 1 ? 32 + subst : subst);
+    }
+
+
+    //gets any symbol
+    //returns true for symbols in abc, otherwise false.
+    //error if argument not a symbol (string with length equals 1)
+    checkSymbolInAbc(symbol) {
+        if (symbol.length > 1) {
+            throw new TypeError(
+                "symbol argument must be a symbol (string with length equals 1)"
+            )
+        }
+
+        return Object.keys(this.ABC).find(searchedKey => this.ABC[searchedKey] === symbol) ? true : false
+    }
 }
+
+export function consoleCheck() {
+    try {
+        const ABC = new RusABC
+        let symbol_A = prompt("A").toString()
+        let symbol_B = prompt("B").toString()
+        //alert(ABC.checkSymbolInAbc(symbol))
+        alert(ABC.subtractSymbols(symbol_A, symbol_B))
+    }
+    catch (e) {
+        alert(e.message)
+    }
+}
+//helloWorld("Print")
