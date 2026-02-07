@@ -12,14 +12,14 @@ export class RusABC {
             5: "Д", 13: "М", 21: "Ф", 29: "Э",
             6: "Е", 14: "Н", 22: "Х", 30: "Ю",
             7: "Ж", 15: "О", 23: "Ц", 31: "Я",
-            8: "З", 16: "П", 24: "Ч", 32: "_",
+            8: "З", 16: "П", 24: "Ч", 0: "_",
         }
 
-        this.minKey = 1
-        this.maxKey = 32
+        this.minKey = 0
+        this.maxKey = 31
     }
 
-    //gets key as integer from 1 to 32
+    //gets key as integer from 0 to 31
     //returns symbol (string) from abc
     getSymbol(key) {
         if (!Number.isInteger(key)) {
@@ -59,9 +59,6 @@ export class RusABC {
             throw new RangeError("key is out of range")
         }
 
-        if (key === 32) { return "00000" }
-
-
         const bin = key.toString(2)
         //console.log(typeof ("0".repeat(5 - bin.length) + bin))
         return "0".repeat(5 - bin.length) + bin
@@ -78,27 +75,80 @@ export class RusABC {
 
     //gets two symbols and returns 
     //symbol with key value equal sum of input symbol's keys.
-    //if sum > 32 (ABC maximum) key repeats from start (e. g. "Я" + "Б" = "А")
+    //if sum > 31 (ABC maximum) key repeats from start (e. g. "Я" + "Б" = "А")
     summarizeSymbols(symbol_A, symbol_B) {
         this.checkSymbolInAbc(symbol_A);
         this.checkSymbolInAbc(symbol_B);
 
         const sum = this.getKey(symbol_A) + this.getKey(symbol_B)
 
-        return this.getSymbol(sum > 32 ? sum - 32 : sum);
+        return this.getSymbol(sum % 32);
+    }
+
+    //gets two texts 
+    //returns their sum by symbols
+    //any text longer then other stays unchanged
+    summarizeText(text_A, text_B) {
+        const [length, max] = text_A.length < text_B.length ? [text_A.length, text_B] : [text_B.length, text_A]
+        let sum = ""
+        for (let i = 0; i < length; i++) {
+            console.log
+            sum = sum + this.summarizeSymbols(text_A[i], text_B[i])
+        }
+        sum = sum + max.substring(length)
+        return sum
     }
 
 
     //gets two symbols and returns 
     //symbol with key value equal difference between symbol_A's key and symbol_B's (symbol_A - symbol_B).
-    //if difference < 1 (ABC minimum) key goes from back (e. g. key = -3 is equal to key = 29)
+    //if difference < 0 (ABC minimum) key goes from back (e. g. key = -3 is equal to key = 29)
     subtractSymbols(symbol_A, symbol_B) {
         this.checkSymbolInAbc(symbol_A);
         this.checkSymbolInAbc(symbol_B);
 
-        const subst = this.getKey(symbol_A) - this.getKey(symbol_B)
+        const subst = this.getKey(symbol_A) - this.getKey(symbol_B) + 32
 
-        return this.getSymbol(subst < 1 ? 32 + subst : subst);
+        return this.getSymbol(subst % 32);
+    }
+
+
+    //gets two texts 
+    //returns their substraction by symbols
+    //any text longer then other stays unchanged
+    subtractText(text_A, text_B) {
+        const [length, max] = text_A.length < text_B.length ? [text_A.length, text_B] : [text_B.length, text_A]
+        let sub = ""
+        for (let i = 0; i < length; i++) {
+            console.log
+            sub = sub + this.subtractSymbols(text_A[i], text_B[i])
+        }
+        sub = sub + max.substring(length)
+        return sub
+    }
+
+
+    //gets text (string of RusABC symbols)
+    //returns array of symbol's keys
+    //if any symbol is not in RusABC throws error
+    getKeyArray(text) {
+        const keyArray = []
+        for (const symbol of text) {
+            keyArray.push(this.getKey(symbol))
+        }
+
+        return keyArray
+    }
+
+    //gets array of keys (integer from 0 to 31)
+    //returns string of symbols received from array's keys
+    //if any key from array is out of ABS's range throws error
+    getTextFromKeys(keysArray) {
+        let text = ""
+        for (const key of keysArray) {
+            text = text + this.getSymbol(key)
+        }
+        return text
     }
 
 
@@ -122,7 +172,11 @@ export function consoleCheck() {
         let symbol_A = prompt("A").toString()
         let symbol_B = prompt("B").toString()
         //alert(ABC.checkSymbolInAbc(symbol))
-        alert(ABC.subtractSymbols(symbol_A, symbol_B))
+        alert(ABC.subtractText(symbol_A, symbol_B))
+        //alert(ABC.getCodeFromSymbol(symbol_B))
+        //const keyarr = ABC.getKeyArray(symbol_A)
+        //alert(keyarr)
+        //alert(ABC.getTextFromKeys(keyarr))
     }
     catch (e) {
         alert(e.message)
