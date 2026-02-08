@@ -58,6 +58,53 @@ class VigenereCoder {
         return decodedText
     }
 
+    //gets text and keyword
+    //returns cyphered by Vigenere's method string
+    baseVigenereEncode(plainText, keyword) {
+        const _keyword = keyword ? keyword : this.keyword
+
+        if (_keyword.length < 1) { throw new RangeError("") }
+
+        for (const i of _keyword) {
+            this.abc.checkSymbolInAbc(i)
+        }
+
+        let baseKey = "_"
+        let encodedText = ""
+        for (let i = 0; i < plainText.length; i++) {
+            this.abc.checkSymbolInAbc(plainText[i])
+
+            baseKey = this.abc.summarizeSymbols(baseKey, _keyword[i % _keyword.length])
+            encodedText = encodedText + this.abc.summarizeSymbols(baseKey, plainText[i])
+        }
+        return encodedText
+    }
+
+
+    //gets cyphered text and keyword
+    //returns decoded by Vigenere's method string
+    baseVigenereDecode(encodedText, keyword) {
+        const _keyword = keyword ? keyword : this.keyword
+
+        if (_keyword.length < 1) { throw new RangeError("") }
+
+        for (const i of _keyword) {
+            this.abc.checkSymbolInAbc(i)
+        }
+
+        let baseKey = "_"
+        let decodedText = ""
+        for (let i = 0; i < encodedText.length; i++) {
+            this.abc.checkSymbolInAbc(encodedText[i])
+
+            baseKey = this.abc.summarizeSymbols(baseKey, _keyword[i % _keyword.length])
+            decodedText = decodedText + this.abc.subtractSymbols(encodedText[i], baseKey)
+        }
+        return decodedText
+    }
+
+
+    //service function to calculate block keyword
     #calcBlockKeyword(keyword) {
         let keyTemp = "____"
         const C = [1, -1, 1, 2, -2, 1, 1, 3, -1, 2]
@@ -77,16 +124,32 @@ class VigenereCoder {
         return keyTemp
     }
 
+    //basic block encoder
+    //gets textBlock (string of 4 symbols) and key (string of 16 symbols)
+    //returns encoded textBlock
     EncodeBlock(textBlock, keyword) {
         if (!(textBlock.length == 4 && keyword.length == 16)) { throw new Error("wrong length args") }
 
         return this.Encode(textBlock, this.#calcBlockKeyword(keyword))
     }
 
+    //basic block decoder
+    //gets encoded textBlock (string of 4 symbols) and key (string of 16 symbols)
+    //returns decoded textBlock
     DecodeBlock(textBlock, keyword) {
         if (!(textBlock.length == 4 && keyword.length == 16)) { throw new Error("wrong length args") }
 
         return this.Decode(textBlock, this.#calcBlockKeyword(keyword))
+    }
+
+
+    //placeholder for encoding with block merge (frw_merge_block в презентации)
+    mergeBlockEncode(textBlock, keyword) {
+
+    }
+    //placeholder for decoding with block merge (inv_merge_block в презентации)
+    mergeBlockDecode(textBlock, keyword) {
+
     }
 }
 
