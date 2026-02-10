@@ -144,12 +144,43 @@ class VigenereCoder {
 
 
     //placeholder for encoding with block merge (frw_merge_block в презентации)
-    mergeBlockEncode(textBlock, keyword) {
-
-    }
-    //placeholder for decoding with block merge (inv_merge_block в презентации)
-    mergeBlockDecode(textBlock, keyword) {
-
+    mergeBlock(blockIn, keyIn, encode) {
+         if (blockIn.length != 4 || keyIn.length != 16 || typeof blockIn !== 'string' || typeof keyIn!== 'string'){
+            return "input-error"
+         }
+         let M = [0,1,2,3]
+         let sum = 0
+         const array = this.abc.getKeyArray(keyIn)
+         for(let i = 0; i < 16; i++){
+            let a = (24 + sum + (-1)**i * array[i]) % 24
+            sum = (24 + sum + (-1)**i * array[i]) % 24
+            
+         }
+         for(let k = 0; k < 3; k++){
+            let t = sum % (4 - k)
+            sum = (sum - t)/(4 - k)
+            let tmp = M[k]
+            M[k] = M[k + t]
+            M[k + t] = tmp
+         }
+         var inp = this.abc.getKeyArray(blockIn)
+         if (encode == true){
+         for(let j = 0; j < 4; j++){
+            let b = M[(1+j) % 4]
+            let a = M[j % 4]
+            inp[b] = (inp[b] + inp[a]) % 32
+            }
+         }
+         if (encode == false)
+         {
+            for (let j=3; j>-1;j--)
+            {
+                let b = M[(1+j) % 4]
+                let a = M[j % 4]
+                inp[b] = (32 + inp[b] - inp[a]) % 32
+            }
+         }
+         return this.abc.getTextFromKeys(inp) 
     }
 }
 
