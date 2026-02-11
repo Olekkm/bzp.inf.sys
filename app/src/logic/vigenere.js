@@ -40,6 +40,30 @@ export class VigenereCoder {
         }
     }
 
+
+    //function to change encoder type without
+    //creating new encoder intstance
+    //gets type like the constructor
+    setEncoder(type) {
+        if (type == undefined) {
+            throw new Error("encoder type must be provided")
+        }
+        else {
+
+            const encoder = {
+                "BaseVigenere": [this.BaseViginereEncode, this.BaseVigenereDecode],
+                "S_Block": [this.EncodeBlock, this.DecodeBlock],
+                "Merge_Block": [(textBlock, keyword) => this.mergeBlock(textBlock, keyword, true),
+                (textBlock, keyword) => this.mergeBlock(textBlock, keyword, false)],
+                "S_Block_Mod": [this.EncodeBlockMod, this.DecodeBlockMod]
+            }
+
+            if (encoder[type] == undefined) { throw new Error("incorrect encoder type") }
+            [this.Encode, this.Decode] = encoder[type]
+            return encoder[type]
+        }
+    }
+
     //gets text and keyword
     //returns cyphered by Vigenere's method string
     BaseViginereEncode(plainText, keyword) {

@@ -1,15 +1,13 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
+import Lab1_page from './pages/Lab1_page.jsx'
+
 
 function App() {
-  const [count, setCount] = useState(0)
 
   return (
     <>
       <div>
-        <p>Workspace</p>
+        <Lab1_page />
       </div>
     </>
   )
