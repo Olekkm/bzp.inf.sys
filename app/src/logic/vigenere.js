@@ -1,6 +1,6 @@
 import { RusABC } from './abc.js'
 
-class VigenereCoder {
+export class VigenereCoder {
     abc
     keyword
 
