@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react"
-import { OneWayCypherer } from "../logic/оneWayCypherer"
+import { useState } from "react"
+import { OneWayCypherer } from "../logic/оneWayCypherer.js"
 
-export function CBlockTexter({ style }) {
+export default function CBlockTester({ style }) {
     const id = [0, 1, 2, 3]
     const [, setInput] = useState(["", "", "", ""])
     const [encoded, setEncoded] = useState("")
