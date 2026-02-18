@@ -1,5 +1,5 @@
 import './App.css'
-import Lab1_page from './pages/Lab1_page.jsx'
+import Lab2_page from './pages/Lab2_page.jsx'
 
 
 function App() {
@@ -7,7 +7,7 @@ function App() {
   return (
     <>
       <div>
-        <Lab1_page />
+        <Lab2_page />
       </div>
     </>
   )
