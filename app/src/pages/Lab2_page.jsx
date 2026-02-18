@@ -1,4 +1,4 @@
-import CBlockTester from "../components/cBlockTester.jsx";
+import CBlockTester from "../components/CBlockTester.jsx";
 import MerDamHashTester from "../components/MerDamHashTester.jsx";
 
 export default function Lab2_page() {
