@@ -70,7 +70,7 @@ export class OneWayCypherer {
             throw new Error("wrong input array type")
         }
 
-        const C = [
+        let C = [
             "________________",
             "ПРОЖЕКТОР_ЧЕПУХИ",
             "КОЛЫХАТЬ_ПАРОДИЮ",
@@ -81,12 +81,12 @@ export class OneWayCypherer {
             C[i] = this.ABC.summarizeText(C[i], array[i])
         }
 
-        C[1] = this.ABC.summarizeText(C[1], array[0])
+        C = this.mixinputs(C)
 
-        const temp = [
-            this.coreCypherFunction(C[0], C[2]),
-            this.coreCypherFunction(C[3], C[1])
-        ]
+        const temp = []
+
+        temp.push(this.coreCypherFunction(C[0], C[2]))
+        temp.push(this.coreCypherFunction(C[3], C[1]))
         temp.push(this.confuse(temp[0], temp[1]))
         temp.push(this.coreCypherFunction(temp[2], temp[0]))
 
@@ -114,7 +114,10 @@ export class OneWayCypherer {
             }
         }
 
-        return this.ABC.getTextFromKeys(arr_1)
+        let out = this.ABC.getTextFromKeys(arr_1)
+        out = this.ABC.summarizeText(out, input_1)
+        out = this.ABC.summarizeText(out, input_2)
+        return out
     }
 
 
@@ -153,18 +156,24 @@ export class OneWayCypherer {
                 break;
         }
     }
+
+    //gets array of 4 elements
+    //elements are strings len=16
+    //returns mixed array
+    mixinputs(in_arr) {
+        const out = []
+        out.push(this.ABC.summarizeText(in_arr[0], in_arr[1]))
+        out.push(this.ABC.subtractText(in_arr[0], in_arr[1]))
+        out.push(this.ABC.summarizeText(out[1], this.ABC.summarizeText(in_arr[2], in_arr[3])))
+        out.push(this.ABC.summarizeText(out[0], this.ABC.subtractText(in_arr[2], in_arr[3])))
+
+        return out
+    }
 }
 
 export function consoleCheck() {
-    const arr = []
-    for (let i = 0; i < 4; i++) {
-        const a = prompt(`input ${i + 1}`)
-        a != "" ? arr.push(a) : ""
-    }
-    alert(arr)
-    // const input_1 = [prompt("input1")]
-    //const input_2 = prompt("input2")
-    // const output = new OneWayCypherer().coreCypherFunction(input_1, input_2)
-    const output = new OneWayCypherer().cBlock(arr, 8)
-    alert(output)
+    const a = prompt()
+    const b = prompt()
+
+    alert(new OneWayCypherer().confuse(a, b))
 }
