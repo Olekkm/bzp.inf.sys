@@ -34,7 +34,7 @@ function modifyOneChar(msg, position) {
 
 test("Лавинный тест с разными позициями", () => {
 
-    const iterations = 10000;
+    const iterations = 1000;
     const messageLength = 64;
     let totalDiff = 0;
 

@@ -37,7 +37,9 @@ export class OneWayCypherer {
             arr[vars[3]] = temp
         }
 
-        return this.ABC.getTextFromKeys(arr)
+        let out = this.ABC.getTextFromKeys(arr)
+        out = this.ABC.summarizeText(out, aux) 
+        return out
     }
 
 
