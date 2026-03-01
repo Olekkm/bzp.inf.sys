@@ -1,4 +1,4 @@
-import { RusABC } from "./abc";
+import { RusABC } from "./abc.js";
 
 export class OneWayCypherer {
     ABC
@@ -38,7 +38,7 @@ export class OneWayCypherer {
         }
 
         let out = this.ABC.getTextFromKeys(arr)
-        out = this.ABC.summarizeText(out, aux) 
+        out = this.ABC.summarizeText(out, aux)
         return out
     }
 
