@@ -18,28 +18,28 @@ export class OneWayCypherer {
             throw new Error("wrong inputs lengths")
         }
 
-        const C1 = [1, 1, -1]
-        const C2 = [4, 3, 2, 1, -1, -2, -3, -4]
+        const C1 = [1, -1, 1, -1, 1, -1, 1]
+        const C2 = [1, -1, 1, -1, 1]
 
         const _aux = this.ABC.getKeyArray(aux)
         const _prime = this.ABC.getKeyArray(prime)
         const arr = []
 
         let temp = 0
+        const t1 = _aux.reduce((accum, current) => accum + current, 0)
 
-        const c1 = _prime[2] % 3
-        const c2 = _prime[10 + c1] % 8
-        const c3 = _prime[3 + c2] % 16
+        const c = []
+        c.push(t1 % 7)
+        c.push(_prime[2 * c[0] + 1] % 5)
+        c.push((_prime[2 * c[1]] + _prime[2 * c[0]]) % 16)
 
-        for (let i = 0; i < 32; i++) {
-            const vars = [(c1 + i) % 3, (c2 + i) % 8, (c3 + i) % 16, i % 16]
-            temp = (temp + 64 + _prime[vars[2]] + (C1[vars[0]] * _aux[[vars[3]]]) + C2[[vars[1]]]) % 32
-            arr[vars[3]] = temp
+        for (let i = 0; i < 16; i++) {
+            const [q, j, p] = [(c[0] + i) % 7, (c[1] + i) % 5, (c[2] + i) % 16]
+            temp = (temp + 64 + _prime[p] + (C1[q] * C2[j] * _aux[i])) % 32
+            arr.push(temp)
         }
 
-        let out = this.ABC.getTextFromKeys(arr)
-        out = this.ABC.summarizeText(out, aux)
-        return out
+        return this.ABC.getTextFromKeys(arr)
     }
 
 
@@ -174,8 +174,8 @@ export class OneWayCypherer {
 }
 
 export function consoleCheck() {
-    const a = prompt()
-    const b = prompt()
+    const a = "ХОРОШО_БЫТЬ_ВАМИ"
+    const b = "КЬЕРКЕГОР_ПРОПАЛ"
 
-    alert(new OneWayCypherer().confuse(a, b))
+    console.log(new OneWayCypherer().coreCypherFunction(b, a))
 }
