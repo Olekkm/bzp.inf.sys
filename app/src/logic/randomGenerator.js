@@ -136,8 +136,8 @@ export class RandomGenerator {
         const Core = new this.CypherCore()
         const Value = []
 
-        for (let i = 0; i < 4; i++) {
-            Value.push(Core.cBlock([C[i], seed], 16))
+        for (let elem of C) {
+            Value.push(Core.cBlock([elem, seed], 16))
         }
 
         const secret = Core.cBlock(Value, 16)
@@ -197,6 +197,9 @@ export class RandomGenerator {
         return taps
     }
 
+
+    //gets two arrays (len = 20) of binary numbers
+    //retuns array (len = 20) of binary nuber as out state of the register
     pushLFSR(state, taps) {
         if (state == undefined && this.seed == undefined) {
             throw new Error("seed must be set in object or provided to function (state input)")
@@ -211,6 +214,11 @@ export class RandomGenerator {
         return this.pushRegister(_state, temp % 2)
     }
 
+
+    //gets two arrays (len = 20) of binary numbers
+    //retuns array of:
+    //[0] - stream: array (len = 20) of binary numbers
+    //[0] - state: array (len = 20) of binary numbers
     nextLFSR(state, taps) {
         if (state == undefined && this.seed == undefined) {
             throw new Error("seed must be set in object or provided to function (state input)")
