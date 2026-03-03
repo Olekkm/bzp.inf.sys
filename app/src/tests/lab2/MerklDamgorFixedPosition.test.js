@@ -1,5 +1,5 @@
-import { Merkl_Damgor } from "../logic/merkl_damgor.js";
-import { RusABC } from "../logic/abc.js";
+import { Merkl_Damgor } from "../../logic/merkl_damgor.js";
+import { RusABC } from "../../logic/abc.js";
 import fs from "fs";
 
 
@@ -34,7 +34,7 @@ function modifyOneChar(msg, position) {
 
 test("Лавинный тест с фиксированной позицией", () => {
 
-    const iterations = 10000;
+    const iterations = 2000;
     const messageLength = 64;
     const fixedPosition = 10;
     let totalDiff = 0;

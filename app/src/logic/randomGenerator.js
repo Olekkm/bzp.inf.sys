@@ -274,7 +274,7 @@ export class RandomGenerator {
         if (initFlag == 'up')
         {
             let init = this.initGenerator(seed)
-            console.log(init)
+            //console.log(init)
             for (let i = 0;i < 4; i++)
             {
 

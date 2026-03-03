@@ -1,7 +1,7 @@
-import { VigenereCoder } from '../logic/vigenere.js';
-import { RusABC } from '../logic/abc.js';
+import { VigenereCoder } from '../../logic/vigenere.js';
+import { RusABC } from '../../logic/abc.js';
 
-describe("Проверка S блока на ротацию ключа", () => {
+describe("Проверка S блока на малое изменение ключа", () => {
     const abc = new RusABC();
     const coder = new VigenereCoder("S_Block_Mod");
     const RUS_CHARS = Object.values(abc.ABC);
@@ -38,34 +38,27 @@ describe("Проверка S блока на ротацию ключа", () => {
         return count;
     }
 
-    function rotateKey(key) {
-        
-        return key.slice(1) + key[0];
-    }
+    test("Проверка S блока на малое изменение ключа", () => {
 
-    test("Проверка S блока на ротацию ключа", () => {
         let totalTests = 0;
         let fullDiff = 0;
         let partialDiff = 0;
         let failedDiff = 0;
-        const failedCases = [];
 
         for (const block of blocks) {
+
             for (const key of keys) {
-                const keyRotated = rotateKey(key);
+
+                const lastCharIndex = abc.getKey(key[15]);
+                const modifiedChar = RUS_CHARS[(lastCharIndex + 1) % 32];
+                const keyModified = key.slice(0, 15) + modifiedChar;
 
                 const encoded1 = coder.Encode(block, key);
-                const encoded2 = coder.Encode(block, keyRotated);
-
-                const decoded1 = coder.Decode(encoded1, key);
-                const decoded2 = coder.Decode(encoded2, keyRotated);
+                const encoded2 = coder.Encode(block, keyModified);
 
                 const diffCount = countDifferences(encoded1, encoded2);
-                totalTests++;
 
-                //console.log(`Block: ${block}, Rotated: ${keyRotated}, Key: ${key}, 
-                    //Encoded1: ${encoded1}, Encoded2: ${encoded2}, 
-                    //Decoded1: ${decoded1}, Decoded2: ${decoded2}`);
+                totalTests++;
 
                 if (diffCount === 4) {
                     fullDiff++;
@@ -73,11 +66,6 @@ describe("Проверка S блока на ротацию ключа", () => {
                     partialDiff++;
                 } else {
                     failedDiff++;
-                    failedCases.push({ block, key, keyRotated, diffCount });
-                }
-
-                if (decoded1 !== block || decoded2 !== block) {
-                    failedCases.push({ block, key, keyRotated, decoded1, decoded2 });
                 }
             }
         }
@@ -90,6 +78,10 @@ describe("Проверка S блока на ротацию ключа", () => {
             "Процент пройденных тестов: " + (fullDiff / totalTests * 100).toFixed(2) + "%"
         );
 
+
+
         expect(fullDiff / totalTests).toBeGreaterThan(0.7);
     });
+
 });
+
