@@ -1,5 +1,5 @@
-import { RusABC } from "./abc";
-import { OneWayCypherer } from "./оneWayCypherer";
+import { RusABC } from "./abc.js";
+import { OneWayCypherer } from "./оneWayCypherer.js";
 
 export class RandomGenerator {
     //links to used classes
@@ -176,7 +176,14 @@ export class RandomGenerator {
         _binArray.push(bitValue)
         return _binArray
     }
-
+    seedToBinArray(array){
+        const out = []
+        for(let i = 0; i<3; i++)
+        {
+            out.push(this.blockToBinArray(array[i]))
+        }
+        return out
+    }
 
     //gets array of numbers (integers) in range [1, 20]
     //returns binary array (len = 20) with 1's in places specified in input array
@@ -232,8 +239,101 @@ export class RandomGenerator {
         }
         return [stream, _state]
     }
+    asLFSRpush(state,taps){
+        const lfsr0 = this.pushLFSR(state[0],taps[0])
+        const lfsr1 = this.pushLFSR(state[1],taps[1])
+        const lfsr2 = this.pushLFSR(state[2],taps[2])
+        var stream;
+        if (lfsr0[19]==0)
+            {
+                stream = lfsr1[19]
+            }
+        else
+            {
+                stream = lfsr2[19]
+            }
+        const stateOut=[lfsr0,lfsr1,lfsr2]
+        return [stream,stateOut]
+    }
+    asLFSRnext(state,taps){
+        let stateSet = state;
+        let stream = [];
+        for (let i = 0; i<20; i++)
+        {
+            const tmp = this.asLFSRpush(stateSet,taps);
+            stateSet = tmp[1];
+            stream.push(tmp[0]);
+        }
+        return [stream,stateSet];
+    }
+    cAsLFSRnext(initFlag,state,seed,set)
+    {
+        let stream = ''
+        let check = 0
+        var _state = []
+        if (initFlag == 'up')
+        {
+            let init = this.initGenerator(seed)
+            console.log(init)
+            for (let i = 0;i < 4; i++)
+            {
+
+                _state[i] = this.seedToBinArray([init[i].slice(0,4),init[i].slice(4,8),init[i].slice(8,12)])
+                check = 1
+            }
+        }
+        else if (initFlag == 'down')
+        {
+            _state = state
+            check = 1 
+        }
+        if (check)
+        {
+            for(let j = 0; j < 4; j++)
+            {
+                for(let k = 0; k < 4; k++)
+                {
+                    var T = this.asLFSRnext(_state[k], set[j])
+                    _state[k] = T[1]
+                    if (k == 0)
+                    {
+                        var tmp = T[0]
+                    }
+                    else
+                    {
+                        for(let i = 0; i<20; i++)
+                        {
+                            tmp[i] = (T[0][i]+tmp[i]) % 2
+                        }
+                    }
+                }
+            stream += this.binArrayToBlock(tmp)
+            }
+            
+        }
+        return [stream,_state]
+    }
+
 }
 
 export function consoleCheck() {
     const worker = new RandomGenerator()
 }
+// const w = new RandomGenerator()
+// const s1 = w.blockToBinArray('ЛЕРА')
+// const s2 = w.blockToBinArray('КЛОН')
+// const s3 = w.blockToBinArray('КОНЯ')
+// const t1 = [1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+// const t2 = [0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0]
+// const t3 = [0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0]
+// const t_set = [t1,t2,t3]
+// const s_set = [s1,s2,s3]
+// const res = w.asLFSRnext(s_set,t_set)
+// const seed = 'АБВГДЕЖЗИЙКЛМНОП'
+// // console.log(w.seedToBinArray(['ЛЕРА','КЛОН','КОНЯ']))
+// // console.log(w.asLFSRpush(s_set,t_set))
+// const set = [[w.tapsToBinaryArray([19,18]),w.tapsToBinaryArray([18,7]),w.tapsToBinaryArray([17,3])],
+// [w.tapsToBinaryArray([19,18]),w.tapsToBinaryArray([18,7]),w.tapsToBinaryArray([16,14,13,11])],
+// [w.tapsToBinaryArray([19,18]),w.tapsToBinaryArray([18,7]),w.tapsToBinaryArray([15,13,12,10])],
+// [w.tapsToBinaryArray([19,18]),w.tapsToBinaryArray([18,7]),w.tapsToBinaryArray([14,5,3,1])]]
+// console.log(w.cAsLFSRnext('up',-1,seed,set))
