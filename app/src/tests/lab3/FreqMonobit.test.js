@@ -26,11 +26,11 @@ test("Частотный монобитный тест для C-AS-LFSR", () => 
         let bits = [];
         let state = null;
         
+        const binarySet = SET.map(genArr => 
+            genArr.map(taps => gen.tapsToBinaryArray(taps))
+        );
+
         for (let out = 0; out < OUTPUTS_NEEDED; out++) {
-            
-            const binarySet = SET.map(genArr => 
-                genArr.map(taps => gen.tapsToBinaryArray(taps))
-            );
             
             const [stream, newState] = gen.cAsLFSRnext(
                 out ? 'down' : 'up', 
@@ -56,7 +56,7 @@ test("Частотный монобитный тест для C-AS-LFSR", () => 
     console.log(`\nГистограмма`);
     
     const bins = [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6, 8, 10, 15, 20, 30, 50, 100];
-    let histogram = ''; // ← ВОТ ЭТО ДОБАВИЛ
+    let histogram = '';
     
     for (let i = 0; i < bins.length - 1; i++) {
         const from = bins[i];
@@ -66,7 +66,6 @@ test("Частотный монобитный тест для C-AS-LFSR", () => 
         if (count > 0 || i < 10) {
             const bar = '♡'.repeat(Math.ceil(count / 2)); 
             histogram += `${from.toFixed(1).padStart(5)} - ${to.toFixed(1).padStart(5)} : ${bar.padEnd(50)} ${count}\n`;
-            //console.log(`${from.toFixed(1).padStart(5)} - ${to.toFixed(1).padStart(5)} : ${bar.padEnd(50)} ${count}`);
         }
     }
     
