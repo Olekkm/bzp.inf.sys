@@ -32,6 +32,7 @@ function modifyOneChar(msg, position) {
     return msg.slice(0, position) + newChar + msg.slice(position + 1);
 }
 
+// eslint-disable-next-line no-undef
 test("Лавинный тест с разными позициями", () => {
 
     const iterations = 200;
@@ -91,5 +92,6 @@ test("Лавинный тест с разными позициями", () => {
 
     fs.writeFileSync("MerklDamgorDiffPosition.csv", "\uFEFF" + csv, "utf8");
 
+    // eslint-disable-next-line no-undef
     expect(avgDiff).toBeGreaterThan(30);
 });  

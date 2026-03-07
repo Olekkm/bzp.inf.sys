@@ -1,6 +1,7 @@
 import { VigenereCoder } from '../../logic/vigenere.js';
 import { RusABC } from '../../logic/abc.js';
 
+// eslint-disable-next-line no-undef
 describe("Проверка S блока на малое изменение входа", () => {
     const abc = new RusABC();
     const coder = new VigenereCoder("S_Block_Mod");
@@ -37,6 +38,7 @@ describe("Проверка S блока на малое изменение вх�
         return count;
     }
 
+    // eslint-disable-next-line no-undef
     test("Проверка S блока на малое изменение входа", () => {
         let totalTests = 0;
         let fullDiff = 0;
@@ -83,6 +85,7 @@ describe("Проверка S блока на малое изменение вх�
             "Процент пройденных тестов: " + (fullDiff / totalTests * 100).toFixed(2) + "%"
         );
 
+        // eslint-disable-next-line no-undef
         expect(fullDiff / totalTests).toBeGreaterThan(0.7);
     });
 });

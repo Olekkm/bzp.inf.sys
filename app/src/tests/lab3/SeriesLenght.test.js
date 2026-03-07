@@ -12,13 +12,13 @@ const SET = [
 ];
 
 // eslint-disable-next-line no-undef
-test("Частотный монобитный тест для C-AS-LFSR", () => {
+test("Тест на длину серии единиц", () => {
     const gen = new RandomGenerator();
     const abc = new RusABC();
     const letters = Object.values(abc.ABC);
     
     let passed = 0;
-    const xValues = []; 
+    const maxRunLengths = []; 
 
     for (let rep = 0; rep < REPLICATIONS; rep++) {
         let seed = '';
@@ -46,32 +46,46 @@ test("Частотный монобитный тест для C-AS-LFSR", () => 
             state = newState;
         }
         
-        const n1 = bits.filter(b => b === 1).length;
-        const p1 = n1 / bits.length;
-        const x = Math.abs(1 - 2*p1) / (Math.sqrt(bits.length * p1 * (1-p1)) / bits.length);
+        let currRunOnes = 0;
+        let currRunZeros = 0;
+        let maxRunOnes = 0;
+        let maxRunZeros = 0;
         
-        xValues.push(x);
-        if (x < 3) passed++;
+        for (let i = 0; i < bits.length; i++) {
+            if (bits[i] === 1) {
+                currRunOnes++;
+                currRunZeros = 0;
+                if (currRunOnes > maxRunOnes) maxRunOnes = currRunOnes;
+            } else { // bits[i] === 0
+                currRunZeros++;
+                currRunOnes = 0;
+                if (currRunZeros > maxRunZeros) maxRunZeros = currRunZeros;
+            }
+        }
+        const maxRun = Math.max(maxRunOnes, maxRunZeros);
+
+        if(maxRun >= 10 && maxRun <= 15) passed++;
+        
+        maxRunLengths.push(maxRun);
     }
     
-    console.log(`\nГистограмма`);
     
-    const bins = [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6, 8, 10];
+    console.log('количество прошедших репликаций:', passed);
+    console.log('Гистограмма')
+    const bins = [5, 10, 15, 20, 25, 30];
     let histogram = '';
     
     for (let i = 0; i < bins.length - 1; i++) {
         const from = bins[i];
         const to = bins[i+1];
-        const count = xValues.filter(x => x >= from && x < to).length;
+        const count = maxRunLengths.filter(x => x >= from && x < to).length;
         
         if (count > 0 || i < 10) {
-            const bar = '♡'.repeat(Math.ceil(count / 2)); 
+            const bar = '🎀'.repeat(Math.ceil(count / 3)); 
             histogram += `${from.toFixed(1).padStart(5)} - ${to.toFixed(1).padStart(5)} : ${bar.padEnd(50)} ${count}\n`;
         }
     }
-    console.log('количество прошедших репликаций:', passed);
     console.log(histogram);
-
     // eslint-disable-next-line no-undef
-    expect(passed).toBeGreaterThan(REPLICATIONS * 0.9);
+    expect(passed).toBeGreaterThan(REPLICATIONS * 0.85);
 });

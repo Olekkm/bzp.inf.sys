@@ -1,6 +1,7 @@
 import { VigenereCoder } from '../../logic/vigenere.js';
 import { RusABC } from '../../logic/abc.js';
 
+// eslint-disable-next-line no-undef
 describe("Проверка S блока на малое изменение ключа", () => {
     const abc = new RusABC();
     const coder = new VigenereCoder("S_Block_Mod");
@@ -38,6 +39,7 @@ describe("Проверка S блока на малое изменение кл�
         return count;
     }
 
+    // eslint-disable-next-line no-undef
     test("Проверка S блока на малое изменение ключа", () => {
 
         let totalTests = 0;
@@ -80,6 +82,7 @@ describe("Проверка S блока на малое изменение кл�
 
 
 
+        // eslint-disable-next-line no-undef
         expect(fullDiff / totalTests).toBeGreaterThan(0.7);
     });
 

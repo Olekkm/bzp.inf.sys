@@ -1,6 +1,7 @@
 import { VigenereCoder } from '../../logic/vigenere.js';
 import { RusABC } from '../../logic/abc.js';
 
+// eslint-disable-next-line no-undef
 describe("Проверка S блока на ротацию ключа", () => {
     const abc = new RusABC();
     const coder = new VigenereCoder("S_Block_Mod");
@@ -43,6 +44,7 @@ describe("Проверка S блока на ротацию ключа", () => {
         return key.slice(1) + key[0];
     }
 
+    // eslint-disable-next-line no-undef
     test("Проверка S блока на ротацию ключа", () => {
         let totalTests = 0;
         let fullDiff = 0;
@@ -90,6 +92,7 @@ describe("Проверка S блока на ротацию ключа", () => {
             "Процент пройденных тестов: " + (fullDiff / totalTests * 100).toFixed(2) + "%"
         );
 
+        // eslint-disable-next-line no-undef
         expect(fullDiff / totalTests).toBeGreaterThan(0.7);
     });
 });
