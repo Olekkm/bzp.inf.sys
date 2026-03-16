@@ -1,8 +1,6 @@
 import { RandomGenerator } from "./randomGenerator";
 
 export class SPNet extends RandomGenerator {
-    parent = RandomGenerator;
-
     constructor(seed, ABC, CypherCore) {
         super(seed, ABC, CypherCore);
     }
@@ -61,6 +59,11 @@ export class SPNet extends RandomGenerator {
         return out;
     }
 
+    //gets key: string (len = 16)
+    //     genCount: number (integer)
+    //     RngSet: array of arrays containing taps in binary form
+    //
+    //returns array (len = genCount) of strings (len = 16)
     produceRoundKeys(key, genCount, RngSet) {
         if (typeof key !== "string" || typeof genCount != "number") {
             throw new TypeError(
@@ -76,18 +79,16 @@ export class SPNet extends RandomGenerator {
             throw new Error("genCount should be at least 1");
         }
 
-        const rngSet = RngSet == null ? this.makeLfsrSet() : RngSet;
-
         const out = [];
         let intern;
 
         let temp;
 
-        [temp, intern] = rngFunc("up", -1, key, rngSet);
+        [temp, intern] = this.cAsLFSRnext("up", -1, key, RngSet);
         out.push(temp);
 
         for (let i = 1; i < genCount; i++) {
-            [temp, intern] = rngFunc("down", intern, -1, rngSet);
+            [temp, intern] = this.cAsLFSRnext("down", intern, -1, RngSet);
             out.push(temp);
         }
 
@@ -96,30 +97,29 @@ export class SPNet extends RandomGenerator {
 }
 
 export function consoleCheck() {
-    const worker = new SPNet();
-    // const a = prompt("A");
-    // const b = prompt("B");
-    const set1 = [
-        worker.tapsToBinaryArray([19, 18]),
-        worker.tapsToBinaryArray([18, 7]),
-        worker.tapsToBinaryArray([17, 3]),
-    ];
-    const set2 = [
-        worker.tapsToBinaryArray([19, 18]),
-        worker.tapsToBinaryArray([18, 7]),
-        worker.tapsToBinaryArray([16, 14, 13, 11]),
-    ];
-    const set3 = [
-        worker.tapsToBinaryArray([19, 18]),
-        worker.tapsToBinaryArray([18, 7]),
-        worker.tapsToBinaryArray([15, 13, 12, 10]),
-    ];
-    const set4 = [
-        worker.tapsToBinaryArray([19, 18]),
-        worker.tapsToBinaryArray([18, 7]),
-        worker.tapsToBinaryArray([14, 5, 3, 1]),
-    ];
-    const set = [set1, set2, set3, set4];
-
-    console.log(worker.produceRoundKeys("ПОЛИМАТ_ТЕХНОБОГ", 6, set));
+    // const worker = new SPNet();
+    // // const a = prompt("A");
+    // // const b = prompt("B");
+    // const set1 = [
+    //     worker.tapsToBinaryArray([19, 18]),
+    //     worker.tapsToBinaryArray([18, 7]),
+    //     worker.tapsToBinaryArray([17, 3]),
+    // ];
+    // const set2 = [
+    //     worker.tapsToBinaryArray([19, 18]),
+    //     worker.tapsToBinaryArray([18, 7]),
+    //     worker.tapsToBinaryArray([16, 14, 13, 11]),
+    // ];
+    // const set3 = [
+    //     worker.tapsToBinaryArray([19, 18]),
+    //     worker.tapsToBinaryArray([18, 7]),
+    //     worker.tapsToBinaryArray([15, 13, 12, 10]),
+    // ];
+    // const set4 = [
+    //     worker.tapsToBinaryArray([19, 18]),
+    //     worker.tapsToBinaryArray([18, 7]),
+    //     worker.tapsToBinaryArray([14, 5, 3, 1]),
+    // ];
+    // const set = [set1, set2, set3, set4];
+    // console.log(worker.produceRoundKeys("ПОЛИМАТ_ТЕХНОБОГ", 6, set));
 }
