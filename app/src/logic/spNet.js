@@ -299,7 +299,7 @@ export function consoleCheck() {
     // const set = [set1, set2, set3, set4];
     // console.log(worker.produceRoundKeys("ПОЛИМАТ_ТЕХНОБОГ", 6, set));
 }
-const worker = new SPNet();
+/*const worker = new SPNet();
 const m1 = [[16,3,2,13],
             [5,10,11,8],
             [9,6,7,12],
@@ -336,4 +336,4 @@ const set1 = [
     ];
     const set = [set1, set2, set3, set4];
     const lc = worker.produceRoundKeys("МТВ_ВСЕ_ЕЩЕ_ТЛЕН", 8, set)
-    console.log(worker.frw_SPNet("КОРЫСТЬ_СЛОНА_ЭХ",lc,8))
+    console.log(worker.frw_SPNet("КОРЫСТЬ_СЛОНА_ЭХ",lc,8))*/
