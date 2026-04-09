@@ -278,43 +278,20 @@ check_padding(binmsg)
         var abc = new RusABC()
         iv = "________________"+iv
         msg = this.pad_msg(msg)
-        const L = this.msg2bin(msg).length
-        const a = ""
+        var L = this.msg2bin(msg).length
+        var a = ""
         for(let i = 0; i<5; i++)
         {
-            a = RusABC.getSymbol(L % 32) + a
+            a = abc.getSymbol(L % 32) + a
             L = Math.floor(L / 32)
         }
         data[4] = a
-        mac = ""
-        return [data, iv, msg, mac]
-    }
-    //можно игнорировать
-    validate_packet(packet)
-    {
-        [data, iv, msg, mac] = packet
-        var f = 1
-        t = data[0].slice(0,1)
-        s = data[0].slice(1,2)
-        ml = mac.length
-        if (t != "В")
-        {
-            f = 0
-        }
-        else if((s != "A" || s != "Б") ^ ml != 16)
-        {
-            f = 0
-        }
-        else if (s == "_" && ml != 0)
-        {
-            f = 0
-        }
-        return f
+        return [data, iv, msg, ""]
     }
     //принимает пакет - массив из 4 строк = data,iv,msg,mac, возвращает строку, которая является двоичным представлением пакета
     transmit(packet)
     {
-        [data, iv, msg, mac] = packet
+        const [data, iv, msg, mac] = packet
         var out = data[0]+data[1]+data[2]+data[3]+data[4]
         out = this.msg2bin(out+iv+msg+mac)
         return out
@@ -362,59 +339,7 @@ check_padding(binmsg)
         }
         return out
     }
-    //Берёт на вход 5 переменных - S, H, R, C, M - и возвращает массив из 5 элементов, каждый элемент которого - массив из двух элементов - функции и константы для этих функций
-    make_suite(S, H, R, C, M)
-    {
-        let a1, a2, a3, a4, a5
-
-        if (S === "Caesar")
-        {
-            a3 = ["frw_S_CaesarM", "inv_S_CaesarM", "core_Caesar"]
-        }
-        else if (S === "Trithemus")
-        {
-            a3 = ["frw_S_TrithemusM", "inv_S_TrithemusM", "core_Trithemus"]
-        }
-
-        if (H === "Merkle-Damgard")
-        {
-            a5 = ["MerDam_hash", 6]
-        }
-        else if (H === "Sponge")
-        {
-            a5 = ["SpongeFun_hash", 3]
-        }
-
-        if (C === "Feistel")
-        {
-            a2 = [["frw_Feistel", "inv_Feistel"], 8]
-        }
-        else if (C === "S-P Net")
-        {
-            a2 = [["frw_SPNet", "inv_SPNet" ], 8]
-        }
-
-        if (R === "LCG")
-        {
-            a1 = ["C_CT_LCG_next", "LCG_SET"]
-        }
-        else if (R === "LFSR")
-        {
-            a1 = ["C_AS_LFSR_next", "LFSR_SET"]
-        }
-
-        if (M === "CCM")
-        {
-            a4 = ["CCMP_send", "CCMP_recieve"]
-        }
-        else if (M === "EAX")
-        {
-            a4 = ["EAX_CFB_send", "EAX_CFB_recieve"]
-        }
-
-        const out = [a1, a2, a3, a4, a5]
-        return out
-    }
+    
 
 }
 export function consoleCheck() {
