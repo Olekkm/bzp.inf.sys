@@ -321,7 +321,7 @@ export class lab5 {
     }
 
     frw_CFB(messageInput, ivInput, keyInput, macInput) {
-        if (!(macInput in [-1, 0, 1])) {
+        if (![-1, 0, 1].includes(macInput)) {
             throw new Error("mac input should be on of (-1, 0, 1)");
         }
 
@@ -397,14 +397,68 @@ export class lab5 {
             return cont;
         }
     }
+
+    EAX_CFB_frw(packetInput, cmacInput, keyInput, secInput, onlymac) {
+        let [assdataInput, ivInput, messageInput, tmp] = packetInput;
+
+        tmp = assdataInput[0] + assdataInput[3] + assdataInput[4];
+
+        const civ = this.frw_CFB(secInput + tmp, ivInput, keyInput, -1);
+
+        if (onlymac === 1) {
+            tmp = this.frw_CFB(messageInput, civ, keyInput, -1);
+            const MAC = this.textor(this.textor(tmp, civ), cmacInput);
+            const MSG = messageInput;
+
+            return [assdataInput, ivInput, MSG, MAC];
+        } else {
+            tmp = this.frw_CFB(messageInput, civ, keyInput, 1);
+            const m = tmp.substring(
+                messageInput.length,
+                messageInput.length + 16,
+            );
+            const MAC = this.textor(this.textor(m, civ), cmacInput);
+            const MSG = tmp.substring(0, messageInput.length);
+
+            return [assdataInput, ivInput, MSG, MAC];
+        }
+    }
+
+    EAX_CFB_inv(packetInput, keyInput, secInput, onlymac) {
+        const [adInput, ivInput, messageInput, macInput] = packetInput;
+
+        let temp = adInput[0] + adInput[3] + adInput[4];
+        const data =
+            adInput[0] + adInput[1] + adInput[2] + adInput[3] + "_____";
+        const cmac = this.frw_CFB(data, secInput, keyInput, -1);
+
+        const civ = this.frw_CFB(secInput + temp, ivInput, keyInput, -1);
+
+        if (onlymac === 1) {
+            temp = this.frw_CFB(messageInput, civ, keyInput, -1);
+            const MAC = this.textor(
+                macInput,
+                this.textor(this.textor(temp, civ), cmac),
+            );
+            const MSG = messageInput;
+            return [adInput, ivInput, MSG, MAC];
+        } else {
+            const cont = this.textor(this.textor(macInput, civ), cmac);
+            temp = this.inv_CFB(messageInput + cont, civ, keyInput, 1);
+            const MAC = temp.substring(
+                messageInput.length,
+                messageInput.length + 16,
+            );
+            const MSG = temp.substring(0, messageInput.length);
+            return [adInput, ivInput, MSG, MAC];
+        }
+    }
 }
 export function consoleCheck() {
     const lab = new lab5();
 
     const str =
         "ГАРРИ_С_ОТКРЫТЫМ_РТОМ_СМОТРЕЛ_НА_СЕМЕЙНОЕ_ХРАНИЛИЩЕ_ТЧК_У_НЕГО_БЫЛО_ТАК_МНОГО_ВОПРОСОВ_ЗПТ_ЧТО_ОН_ДАЖЕ_НЕ_ЗНАЛ_ЗПТ_С_КАКОГО_ИМЕННО_НАЧАТЬ_ТЧК_МАКГОНАГАЛЛ_СТОЯЛА_У_ДВЕРИ_И_НАБЛЮДАЛА_ЗА_МАЛЬЧИКОМ_ТЧК_ОНА_НЕБРЕЖНО_ОПИРАЛАСЬ_О_СТЕНУ_ЗПТ_НО_ВЗГЛЯД_У_НЕЕ_БЫЛ_НАПРЯЖЕННЫЙ_ТЧК_И_НЕСПРОСТА_ТЧК_ОКАЗАТЬСЯ_ПЕРЕД_ОГРОМНОЙ_КУЧЕЙ_ЗОЛОТЫХ_МОНЕТ_ТИРЕ_ТА_ЕЩЕ_ПРОВЕРКА_НА_ПРОЧНОСТЬ_ТЧК_";
-
-    const iv1 = "АЛИСА_УМЕЕТ_ПЕТЬ";
 
     const keys = [
         "ОННТЦРХФЙФМРИРАК",
@@ -417,9 +471,18 @@ export function consoleCheck() {
         "ЫЙАННЦУЖДЬСГДУШН",
     ];
 
-    const frw = lab.frw_CFB(str, iv1, keys, 1);
+    const iv1 = "АЛИСА_УМЕЕТ_ПЕТЬ";
 
-    console.log(lab.inv_CFB(frw, iv1, keys, 1));
+    const AD = ["ВБ", "АЛИСА_АЖ", "БОБ___ОЧ", "ЕГИПТЯНИН", "АБВГД"];
+    const packet = [AD, "БОБ_НЕМНОГО_ПЬЯН", str, ""];
+    const cadInput = "ПОКА_ЕЩЕ_НЕВАЖНО";
+    const secInput = "ТОЖЕ_ЕЩЕ_НЕВАЖНО";
+    const cad = AD[0] + AD[1] + AD[2] + AD[3] + "_____";
+    const cadmac = lab.frw_CFB(cad, secInput, keys, -1);
+
+    const frw = lab.EAX_CFB_frw(packet, cadmac, keys, secInput, 0);
+    console.log(frw);
+    console.log(lab.EAX_CFB_inv(frw, keys, secInput, 0));
 
     // const pass1 = "ЧЕЧЕТКА";
     // const pass2 = "АПРОЛ";
