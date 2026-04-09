@@ -2,6 +2,8 @@ import { RusABC } from "./abc.js";
 import { Merkl_Damgor } from "./merkl_damgor.js";
 import fs from "fs";
 import { SPNet } from "./SPNet.js";
+import { RandomGenerator } from "./randomGenerator.js";
+
 export class lab5 {
     //принимает строку, строку, масив строк, массив чисел, число
     //возвращает массив строк
@@ -305,16 +307,11 @@ export class lab5 {
     //Берёт на вход 5 переменных - S, H, R, C, M - и возвращает массив из 5 элементов, каждый элемент которого - массив из двух элементов - функции и константы для этих функций
     make_suite() {
         let a1, a2, a3, a4, a5;
-
-        a3 = ["frw_S_CaesarM", "inv_S_CaesarM", "core_Caesar"];
-
-        a5 = ["MerDam_hash", 6];
-
-        a2 = [["frw_SPNet", "inv_SPNet"], 8];
-
         a1 = ["C_AS_LFSR_next", "LFSR_SET"];
-
+        a2 = [["frw_SPNet", "inv_SPNet"], 8];
+        a3 = ["frw_S_CaesarM", "inv_S_CaesarM", "core_Caesar"];
         a4 = ["EAX_CFB_send", "EAX_CFB_recieve"];
+        a5 = ["MerDam_hash", 6];
 
         const out = [a1, a2, a3, a4, a5];
         return out;
@@ -453,27 +450,217 @@ export class lab5 {
             return [adInput, ivInput, MSG, MAC];
         }
     }
+
+    LFSR_SET() {
+        const worker = new SPNet();
+
+        const set1 = [
+            worker.tapsToBinaryArray([19, 18]),
+            worker.tapsToBinaryArray([18, 7]),
+            worker.tapsToBinaryArray([17, 3]),
+        ];
+        const set2 = [
+            worker.tapsToBinaryArray([19, 18]),
+            worker.tapsToBinaryArray([18, 7]),
+            worker.tapsToBinaryArray([16, 14, 13, 11]),
+        ];
+        const set3 = [
+            worker.tapsToBinaryArray([19, 18]),
+            worker.tapsToBinaryArray([18, 7]),
+            worker.tapsToBinaryArray([15, 13, 12, 10]),
+        ];
+        const set4 = [
+            worker.tapsToBinaryArray([19, 18]),
+            worker.tapsToBinaryArray([18, 7]),
+            worker.tapsToBinaryArray([14, 5, 3, 1]),
+        ];
+        return [set1, set2, set3, set4];
+    }
+
+    invert(streamInput, nInput) {
+        let clone = structuredClone(streamInput);
+        const q = streamInput[nInput];
+        clone[nInput] = (q + 1) % 2;
+        return clone;
+    }
+
+    #send(assocData, msgArray, msgCounter, iv0, dataMac, keyset, secret) {
+        const [mtype, sender, reciever, transmission] = assocData;
+        const rg = new RandomGenerator();
+        const out = [];
+        for (let i = 0; i < msgArray.length; i++) {
+            const msgSec = mtype;
+            msgCounter++;
+            const iv = iv0 + rg.NumberToBlock(BigInt(msgCounter));
+            const tmpPacket = this.prepare_packet(
+                [msgSec, sender, reciever, transmission],
+                iv,
+                msgArray[i],
+            );
+
+            switch (msgSec) {
+                case "В_":
+                    out.push(this.transmit(tmpPacket));
+                    break;
+                case "ВА":
+                    {
+                        const secPacket = this.EAX_CFB_frw(
+                            tmpPacket,
+                            dataMac,
+                            keyset,
+                            secret,
+                            1,
+                        );
+                        out.push(this.transmit(secPacket));
+                    }
+                    break;
+                case "ВБ":
+                    {
+                        const secPacket = this.EAX_CFB_frw(
+                            tmpPacket,
+                            dataMac,
+                            keyset,
+                            secret,
+                            0,
+                        );
+                        out.push(this.transmit(secPacket));
+                    }
+                    break;
+            }
+        }
+        return out;
+    }
+
+    #recieve(msgArray, keyset, secret, mtype) {
+        const rg = new RandomGenerator();
+        let last = -1;
+        let out = [];
+
+        for (let i = 0; i < msgArray.length; i++) {
+            let recPacket = [];
+            const tmpPacket = this.receive(msgArray[i]);
+            const rdata = tmpPacket[0];
+
+            const current = rg.blockToNumber(
+                tmpPacket[1].substring(12, 12 + 4),
+            );
+
+            if (!(current > last)) {
+                continue;
+            }
+
+            if (rdata[0] === "ВБ") {
+                recPacket = this.EAX_CFB_inv(tmpPacket, keyset, secret, 0);
+                recPacket[2] = this.unpad_msg(recPacket[2]);
+
+                if (recPacket[3] === "________________") {
+                    last = current;
+                    recPacket[3] = "OK";
+                }
+            } else if (rdata[0] === "ВА" || mtype !== "ВБ") {
+                recPacket = this.EAX_CFB_inv(tmpPacket, keyset, secret, 1);
+                recPacket[2] = this.unpad_msg(recPacket[2]);
+
+                if (recPacket[3] === "________________") {
+                    last = current;
+                    recPacket[3] = "OK";
+                }
+            } else if (rdata[0] === "В_" || mtype === "В_") {
+                recPacket = tmpPacket;
+                recPacket[2] = this.unpad_msg(recPacket[2]);
+
+                if (recPacket[3] === "") {
+                    last = current;
+                    recPacket[3] = "N/A";
+                }
+            } else {
+                recPacket = tmpPacket;
+            }
+            out[i] = recPacket;
+        }
+        return out;
+    }
+
+    EAX_CFB(assocData, msgArray, keyInput, nonce, type) {
+        const spNet = new SPNet();
+        const ABC = new RusABC();
+
+        const [mtype, sender, reciever, transmission] = assocData;
+        const t1 = reciever + sender;
+        const t2 = mtype + transmission + "____";
+        const cad = ABC.summarizeText(t1, t2);
+        const iv0 = ABC.summarizeText(cad, nonce).substring(0, 12);
+        const t3 = reciever < sender ? t1 : sender + reciever;
+        const msgCounter = -1;
+
+        const keyset = spNet.produceRoundKeys(keyInput, 8, this.LFSR_SET());
+
+        const secret = this.frw_CFB(t3 + t2, keyInput, keyset, -1);
+        const data = mtype + sender + reciever + transmission + "____";
+        const dataMac = this.frw_CFB(data, secret, keyset, -1);
+
+        switch (type) {
+            case "send":
+                {
+                    const out = this.#send(
+                        assocData,
+                        msgArray,
+                        msgCounter,
+                        iv0,
+                        dataMac,
+                        keyset,
+                        secret,
+                    );
+                    return out;
+                }
+                break;
+            case "recieve":
+                {
+                    const out = this.#recieve(msgArray, keyset, secret, mtype);
+                    return out;
+                }
+                break;
+            default:
+                throw new Error('error in "type" parameter');
+                break;
+        }
+    }
 }
 export function consoleCheck() {
     const lab = new lab5();
 
-    const str =
-        "ГАРРИ_С_ОТКРЫТЫМ_РТОМ_СМОТРЕЛ_НА_СЕМЕЙНОЕ_ХРАНИЛИЩЕ_ТЧК_У_НЕГО_БЫЛО_ТАК_МНОГО_ВОПРОСОВ_ЗПТ_ЧТО_ОН_ДАЖЕ_НЕ_ЗНАЛ_ЗПТ_С_КАКОГО_ИМЕННО_НАЧАТЬ_ТЧК_МАКГОНАГАЛЛ_СТОЯЛА_У_ДВЕРИ_И_НАБЛЮДАЛА_ЗА_МАЛЬЧИКОМ_ТЧК_ОНА_НЕБРЕЖНО_ОПИРАЛАСЬ_О_СТЕНУ_ЗПТ_НО_ВЗГЛЯД_У_НЕЕ_БЫЛ_НАПРЯЖЕННЫЙ_ТЧК_И_НЕСПРОСТА_ТЧК_ОКАЗАТЬСЯ_ПЕРЕД_ОГРОМНОЙ_КУЧЕЙ_ЗОЛОТЫХ_МОНЕТ_ТИРЕ_ТА_ЕЩЕ_ПРОВЕРКА_НА_ПРОЧНОСТЬ_ТЧК_";
-
-    const keys = [
-        "ОННТЦРХФЙФМРИРАК",
-        "ЖЛЬГИЗФХЗМЩХМРЛО",
-        "ПЛПХВЛЕГЙСЕВЯГМЛ",
-        "ТТХАОПСЫНЕЦОХЫДЛ",
-        "ЩЯЩЬЛАГЧЬФПЙЗЗЧГ",
-        "ЗГГСРСШ_НЮЖДТАЫЙ",
-        "МЩГХИШКЖРЯЩВККТГ",
-        "ЫЙАННЦУЖДЬСГДУШН",
+    const str = [
+        "ГАРРИ_С_ОТКРЫТЫМ_РТОМ_СМОТРЕЛ_НА_СЕМЕЙНОЕ_ХРАНИЛИЩЕ_ТЧК_У_НЕГО_БЫЛО_ТАК_МНОГО_ВОПРОСОВ_ЗПТ_ЧТО_ОН_ДАЖЕ_НЕ_ЗНАЛ_ЗПТ_С_КАКОГО_ИМЕННО_НАЧАТЬ_ТЧК_МАКГОНАГАЛЛ_СТОЯЛА_У_ДВЕРИ_И_НАБЛЮДАЛА_ЗА_МАЛЬЧИКОМ_ТЧК_ОНА_НЕБРЕЖНО_ОПИРАЛАСЬ_О_СТЕНУ_ЗПТ_НО_ВЗГЛЯД_У_НЕЕ_БЫЛ_НАПРЯЖЕННЫЙ_ТЧК_И_НЕСПРОСТА_ТЧК_ОКАЗАТЬСЯ_ПЕРЕД_ОГРОМНОЙ_КУЧЕЙ_ЗОЛОТЫХ_МОНЕТ_ТИРЕ_ТА_ЕЩЕ_ПРОВЕРКА_НА_ПРОЧНОСТЬ_ТЧК_",
+        "ИСТОРИЯ_ГАНСА_КАСТОРПА_ЗПТ_КОТОРУЮ_МЫ_ХОТИМ_ЗДЕСЬ_РАССКАЗАТЬ_ЗПТ_ТИРЕ_ОТНЮДЬ_НЕ_РАДИ_НЕГО_ПОСКОЛЬКУ_ЧИТАТЕЛЬ_В_ЕГО_ЛИЦЕ_ПОЗНАКОМИТСЯ_ЛИШЬ_С_САМЫМ_ОБЫКНОВЕННЫМ_ЗПТ_ХОТЯ_И_ПРИЯТНЫМ_МОЛОДЫМ_ЧЕЛОВЕКОМ_ЗПТ_ТИРЕ_ИЗЛАГАЕТСЯ_РАДИ_САМОЙ_ЭТОЙ_ИСТОРИИ_ЗПТ_ИБО_ОНА_КАЖЕТСЯ_НАМ_В_ВЫСОКОЙ_СТЕПЕНИ_ДОСТОЙНОЙ_ОПИСАНИЯ_ПРИЧЕМ_ЗПТ_К_ЧЕСТИ_ГАНСА_КАСТОРПА_ЗПТ_СЛЕДУЕТ_ОТМЕТИТЬ_ЗПТ_ЧТО_ЭТО_ИМЕННО_ЕГО_ИСТОРИЯ_ЗПТ_А_ВЕДЬ_НЕ_С_ЛЮБЫМ_И_КАЖДЫМ_ЧЕЛОВЕКОМ_МОЖЕТ_СЛУЧИТЬСЯ_ИСТОРИЯ_ТЧК_ТАК_ВОТ_ДВТЧ_ЭТА_ИСТОРИЯ_ПРОИЗОШЛА_МНОГО_ВРЕМЕНИ_НАЗАД_ЗПТ_ОНА_ЗПТ_ТАК_СКАЗАТЬ_ЗПТ_УЖЕ_ПОКРЫЛАСЬ_БЛАГОРОДНОЙ_РЖАВЧИНОЙ_СТАРИНЫ_ЗПТ_И_ПОВЕСТВОВАНИЕ_О_НЕЙ_ДОЛЖНО_ЗПТ_РАЗУМЕЕТСЯ_ЗПТ_ВЕСТИСЬ_В_ФОРМАХ_ДАВНО_ПРОШЕДШЕГО_ТЧК_ДЛЯ_ИСТОРИИ_ЭТО_НЕ_ТАКОЙ_УЖ_БОЛЬШОЙ_НЕДОСТАТОК_ЗПТ_СКОРЕЕ_ДАЖЕ_ПРЕИМУЩЕСТВО_ЗПТ_ИБО_ЛЮБАЯ_ИСТОРИЯ_ДОЛЖНА_БЫТЬ_ПРОШЛЫМ_ЗПТ_И_ЧЕМ_БОЛЕЕ_ОНА_ТИРЕ_ПРОШЛОЕ_ЗПТ_ТЕМ_ЛУЧШЕ_И_ДЛЯ_ЕЕ_ОСОБЕННОСТЕЙ_КАК_ИСТОРИИ_И_ДЛЯ_РАССКАЗЧИКА_ЗПТ_КОТОРЫЙ_БОРМОЧЕТ_СВОИ_ЗАКЛИНАНИЯ_НАД_ПРОШЕДШИМИ_ВРЕМЕНАМИ_ТЧК_ОДНАКО_ПРИХОДИТСЯ_ПРИЗНАТЬ_ЗПТ_ЧТО_ОНА_ЗПТ_ТАК_ЖЕ_КАК_В_НАШУ_ЭПОХУ_И_САМИ_ЛЮДИ_ЗПТ_ОСОБЕННО_ЖЕ_РАССКАЗЧИКИ_ИСТОРИЙ_ЗПТ_ГОРАЗДО_СТАРЕЕ_СВОИХ_ЛЕТ_ЗПТ_ЕЕ_ВОЗРАСТ_ИЗМЕРЯЕТСЯ_НЕ_ПРОТЕКШИМИ_ДНЯМИ_ЗПТ_И_БРЕМЯ_ЕЕ_ГОДОВ_ТИРЕ_НЕ_ЧИСЛОМ_ОБРАЩЕНИЙ_ЗЕМЛИ_ВОКРУГ_СОЛНЦА_ТЧК_СЛОВОМ_ЗПТ_ОНА_ОБЯЗАНА_СТЕПЕНЬЮ_СВОЕЙ_ДАВНОСТИ_НЕ_САМОМУ_ВРЕМЕНИ_ТЧК_ОТМЕТИМ_ЗПТ_ЧТО_В_ЭТИХ_СЛОВАХ_МЫ_ДАЕМ_МИМОХОДОМ_НАМЕК_И_УКАЗАНИЕ_НА_СОМНИТЕЛЬНОСТЬ_И_СВОЕОБРАЗНУЮ_ДВОЙСТВЕННОСТЬ_ТОЙ_ЗАГАДОЧНОЙ_СТИХИИ_ЗПТ_КОТОРАЯ_ЗОВЕТСЯ_ВРЕМЕНЕМ_ТЧК_ОДНАКО_ЗПТ_НЕ_ЖЕЛАЯ_ИСКУССТВЕННО_ЗАТЕМНЯТЬ_ВОПРОС_ЗПТ_ПО_СУЩЕСТВУ_СОВЕРШЕННО_ЯСНЫЙ_ЗПТ_СКАЖЕМ_СЛЕДУЮЩЕЕ_ДВТЧ_ОСОБАЯ_ДАВНОСТЬ_НАШЕЙ_ИСТОРИИ_ЗАВИСИТ_ЕЩЕ_И_ОТ_ТОГО_ЗПТ_ЧТО_ОНА_ПРОИСХОДИТ_НА_НЕКОЕМ_РУБЕЖЕ_И_ПЕРЕД_ПОВОРОТОМ_ЗПТ_ГЛУБОКО_РАСЩЕПИВШИМ_НАШУ_ЖИЗНЬ_И_СОЗНАНИЕ_МНГТЧ_ОНА_ПРОИСХОДИТ_ЗПТ_ИЛИ_ЗПТ_ЧТОБЫ_ИЗБЕЖАТЬ_ВСЯКИХ_ФОРМ_НАСТОЯЩЕГО_ЗПТ_СКАЖЕМ_ЗПТ_ПРОИСХОДИЛА_ЗПТ_ПРОИЗОШЛА_НЕКОГДА_ЗПТ_КОГДА_ТИРЕ_ТО_ЗПТ_В_СТАРОДАВНИЕ_ВРЕМЕНА_ЗПТ_В_ДНИ_ПЕРЕД_ВЕЛИКОЙ_ВОЙНОЙ_ЗПТ_С_НАЧАЛОМ_КОТОРОЙ_НАЧАЛОСЬ_СТОЛЬ_МНОГОЕ_ЗПТ_ЧТО_ПОТОМ_ОНО_УЖЕ_И_НЕ_ПЕРЕСТАВАЛО_НАЧИНАТЬСЯ_ТЧК_ИТАК_ЗПТ_ОНА_ПРОИСХОДИТ_ПЕРЕД_ТЕМ_ПОВОРОТОМ_ЗПТ_ПРАВДА_НЕЗАДОЛГО_ДО_НЕГО_ТЧК_НО_РАЗВЕ_ХАРАКТЕР_ДАВНОСТИ_КАКОЙ_ТИРЕ_НИБУДЬ_ИСТОРИИ_НЕ_СТАНОВИТСЯ_ТЕМ_ГЛУБЖЕ_ЗПТ_СОВЕРШЕННЕЕ_И_СКАЗОЧНЕЕ_ЗПТ_ЧЕМ_БЛИЖЕ_ОНА_К_ЭТОМУ_ПЕРЕД_ТЕМ_ВПРС_КРОМЕ_ТОГО_ЗПТ_НАША_ИСТОРИЯ_ЗПТ_БЫТЬ_МОЖЕТ_ЗПТ_И_ПО_СВОЕЙ_ВНУТРЕННЕЙ_ПРИРОДЕ_НЕ_ЛИШЕНА_НЕКОТОРОЙ_СВЯЗИ_СО_СКАЗКОЙ_ТЧК_МЫ_БУДЕМ_ОПИСЫВАТЬ_ЕЕ_ВО_ВСЕХ_ПОДРОБНОСТЯХ_ЗПТ_ТОЧНО_И_ОБСТОЯТЕЛЬНО_ЗПТ_ТИРЕ_ИБО_КОГДА_ЖЕ_ВРЕМЯ_ПРИ_ИЗЛОЖЕНИИ_КАКОЙ_ТИРЕ_НИБУДЬ_ИСТОРИИ_ЛЕТЕЛО_ИЛИ_ТЯНУЛОСЬ_ПО_ПОДСКАЗКЕ_ПРОСТРАНСТВА_И_ВРЕМЕНИ_ЗПТ_КОТОРЫЕ_НУЖНЫ_ДЛЯ_ЕЕ_РАЗВЕРТЫВАНИЯ_ВПРС_НЕ_ОПАСАЯСЬ_УПРЕКА_В_ПЕДАНТИЗМЕ_ЗПТ_МЫ_СКОРЕЕ_СКЛОННЫ_УТВЕРЖДАТЬ_ЗПТ_ЧТО_ЛИШЬ_ОСНОВАТЕЛЬНОСТЬ_МОЖЕТ_БЫТЬ_ЗАНИМАТЕЛЬНОЙ_ТЧК_СЛЕДОВАТЕЛЬНО_ЗПТ_ОДНИМ_МАХОМ_РАССКАЗЧИК_С_ИСТОРИЕЙ_ГАНСА_НЕ_СПРАВИТСЯ_ТЧК_СЕМИ_ДНЕЙ_НЕДЕЛИ_НА_НЕЕ_НЕ_ХВАТИТ_ЗПТ_НЕ_ХВАТИТ_И_СЕМИ_МЕСЯЦЕВ_ТЧК_САМОЕ_ЛУЧШЕЕ_ТИРЕ_И_НЕ_СТАРАТЬСЯ_УЯСНИТЬ_СЕБЕ_ЗАРАНЕЕ_ЗПТ_СКОЛЬКО_ИМЕННО_ПРОЙДЕТ_ЗЕМНОГО_ВРЕМЕНИ_ЗПТ_ПОКА_ОНА_БУДЕТ_ДЕРЖАТЬ_ЕГО_В_СВОИХ_ТЕНЕТАХ_ТЧК_СЕМИ_ЛЕТ_ЗПТ_ДАСТ_БОГ_ЗПТ_ВСЕ_ЖЕ_НЕ_ПОНАДОБИТСЯ_ТЧК_ИТАК_ЗПТ_МЫ_НАЧИНАЕМ_ТЧК",
+        "ЛОРДЫ_И_ЛЕДИ_ВИЗЕНГАМОТА_В_ФИОЛЕТОВЫХ_МАНТИЯХ_ЗПТ_ОТМЕЧЕННЫХ_СЕРЕБРЯНОЙ_ЛИТЕРОЙ_В_ЗПТ_С_ХОЛОДНЫМ_УПРЕКОМ_СМОТРЕЛИ_НА_ДРОЖАЩУЮ_ДЕВОЧКУ_ЗПТ_ЗАКОВАННУЮ_В_ЦЕПИ_ТЧК_ЕСЛИ_В_РАМКАХ_КАКОЙТО_ЭТИЧЕСКОЙ_СИСТЕМЫ_ОНИ_И_ПОРИЦАЛИ_СЕБЯ_ЗПТ_ТО_ОПРЕДЕЛЕННО_СТАВИЛИ_ЭТО_СЕБЕ_В_ЗАСЛУГУ_ТЧК_ГАРРИ_С_ТРУДОМ_МОГ_РОВНО_ДЫШАТЬ_ТЧК_ЕГО_ТЕМНАЯ_СТОРОНА_ПРИДУМАЛА_ПЛАН_МНГТЧ_И_ОТСТУПИЛА_НАЗАД_ТЧК_СЛИШКОМ_ЛЕДЯНОЙ_ТОН_НЕ_ПОЙДЕТ_НА_ПОЛЬЗУ_ГЕРМИОНЕ_ТЧК_БУДУЧИ_ЛИШЬ_НАПОЛОВИНУ_ПОГРУЖЕННЫМ_В_СВОЮ_ТЕМНУЮ_СТОРОНУ_ЗПТ_ГАРРИ_ПОЧЕМУТО_ЭТОГО_НЕ_ПОНИМАЛ_МНГТЧ",
     ];
+    const keys = new SPNet().produceRoundKeys(
+        "СЕАНСОВЫЙ_КЛЮЧИК",
+        8,
+        lab.LFSR_SET(),
+    );
+    const AD = ["ВБ", "БОБ____ЬЬ", "АЛИСА_ЯЗ", "ЭКЛАМПСИЯ"];
+
+    const channel = lab.EAX_CFB(
+        AD,
+        str,
+        "СЕАНСОВЫЙ_КЛЮЧИК",
+        "СЕМИХАТОВ_КВАНТЫ",
+        "send",
+    );
+
+    const transmission = lab.EAX_CFB(
+        AD,
+        channel,
+        "СЕАНСОВЫЙ_КЛЮЧИК",
+        "СЕМИХАТОВ_КВАНТЫ",
+        "recieve",
+    );
+
+    console.log(transmission);
 
     const iv1 = "АЛИСА_УМЕЕТ_ПЕТЬ";
 
-    const AD = ["ВБ", "АЛИСА_АЖ", "БОБ___ОЧ", "ЕГИПТЯНИН", "АБВГД"];
     const packet = [AD, "БОБ_НЕМНОГО_ПЬЯН", str, ""];
     const cadInput = "ПОКА_ЕЩЕ_НЕВАЖНО";
     const secInput = "ТОЖЕ_ЕЩЕ_НЕВАЖНО";
@@ -481,8 +668,8 @@ export function consoleCheck() {
     const cadmac = lab.frw_CFB(cad, secInput, keys, -1);
 
     const frw = lab.EAX_CFB_frw(packet, cadmac, keys, secInput, 0);
-    console.log(frw);
-    console.log(lab.EAX_CFB_inv(frw, keys, secInput, 0));
+    //console.log(frw);
+    //console.log(lab.EAX_CFB_inv(frw, keys, secInput, 0));
 
     // const pass1 = "ЧЕЧЕТКА";
     // const pass2 = "АПРОЛ";
