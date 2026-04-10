@@ -266,7 +266,6 @@ export class lab5 {
         var L = 0;
         for (let i = 0; i < 5; i++) {
             let t = length.slice(i, i + 1);
-            console.log(t);
             let l = abc.getKey(t);
             L = 32 * L + l;
         }
@@ -575,7 +574,7 @@ export class lab5 {
 
         const [mtype, sender, reciever, transmission] = assocData;
         const t1 = reciever + sender;
-        const t2 = mtype + transmission + "____";
+        const t2 = mtype + transmission + "_____";
         const cad = ABC.summarizeText(t1, t2);
         const iv0 = ABC.summarizeText(cad, nonce).substring(0, 12);
         const t3 = reciever < sender ? t1 : sender + reciever;
@@ -584,7 +583,7 @@ export class lab5 {
         const keyset = spNet.produceRoundKeys(keyInput, 8, this.LFSR_SET());
 
         const secret = this.frw_CFB(t3 + t2, keyInput, keyset, -1);
-        const data = mtype + sender + reciever + transmission + "____";
+        const data = mtype + sender + reciever + transmission + "_____";
         const dataMac = this.frw_CFB(data, secret, keyset, -1);
 
         switch (type) {
@@ -627,7 +626,7 @@ export function consoleCheck() {
         8,
         lab.LFSR_SET(),
     );
-    const AD = ["ВБ", "БОБ____ЬЬ", "АЛИСА_ЯЗ", "ЭКЛАМПСИЯ"];
+    const AD = ["ВБ", "БОБ___ЬЬ", "АЛИСА_ЯЗ", "ЭКЛАМПСИЯ"];
 
     const channel = lab.EAX_CFB(
         AD,
@@ -647,15 +646,16 @@ export function consoleCheck() {
 
     console.log(transmission);
 
-    const iv1 = "АЛИСА_УМЕЕТ_ПЕТЬ";
+    // const iv1 = "АЛИСА_УМЕЕТ_ПЕТЬ";
 
-    const packet = [AD, "БОБ_НЕМНОГО_ПЬЯН", str, ""];
-    const cadInput = "ПОКА_ЕЩЕ_НЕВАЖНО";
-    const secInput = "ТОЖЕ_ЕЩЕ_НЕВАЖНО";
-    const cad = AD[0] + AD[1] + AD[2] + AD[3] + "_____";
-    const cadmac = lab.frw_CFB(cad, secInput, keys, -1);
+    // const packet = [AD, "БОБ_НЕМНОГО_ПЬЯН", str, ""];
+    // const cadInput = "ПОКА_ЕЩЕ_НЕВАЖНО";
+    // const secInput = "ТОЖЕ_ЕЩЕ_НЕВАЖНО";
+    // const cad = AD[0] + AD[1] + AD[2] + AD[3] + "_____";
+    // const cadmac = lab.frw_CFB(cad, secInput, keys, -1);
 
-    const frw = lab.EAX_CFB_frw(packet, cadmac, keys, secInput, 0);
+    // const frw = lab.EAX_CFB_frw(packet, cadmac, keys, secInput, 0);
+
     //console.log(frw);
     //console.log(lab.EAX_CFB_inv(frw, keys, secInput, 0));
 
