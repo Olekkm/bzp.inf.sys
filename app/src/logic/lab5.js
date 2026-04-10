@@ -254,6 +254,7 @@ export class lab5 {
     }
     //принимает строку(поток), возвращает двумерный массив [[type, sender, receiver, session, length], iv, msg, mac]
     receive(stream) {
+        const abc = new RusABC();
         var p = this.bin2msg(stream);
         var m = p.length;
         var type = p.slice(0, 2);
@@ -264,8 +265,9 @@ export class lab5 {
         var iv = p.slice(32, 48);
         var L = 0;
         for (let i = 0; i < 5; i++) {
-            t = length.slice[(i, i + 1)];
-            l = abc.getKey(t);
+            let t = length.slice(i, i + 1);
+            console.log(t);
+            let l = abc.getKey(t);
             L = 32 * L + l;
         }
         L = Math.floor(L / 5);
@@ -684,3 +686,4 @@ export function consoleCheck() {
     // const a2 = "МЫШКА_БЫЛА_ЛИХОЙ";
     // console.log(lab.textor(a1, a2));
 }
+consoleCheck();
