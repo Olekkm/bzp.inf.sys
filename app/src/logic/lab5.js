@@ -383,26 +383,26 @@ export class lab5 {
     }
 
     EAX_CFB_frw(packetInput, cmacInput, keyInput, secInput, onlymac) {
-        let [assdataInput, ivInput, messageInput, tmp] = packetInput;
+        let [assdataInput, ivInput, messageInput, temp] = packetInput;
 
-        tmp = assdataInput[0] + assdataInput[3] + assdataInput[4];
+        temp = assdataInput[0] + assdataInput[3] + assdataInput[4];
 
-        const civ = this.frw_CFB(secInput + tmp, ivInput, keyInput, -1);
+        const civ = this.frw_CFB(secInput + temp, ivInput, keyInput, -1);
 
         if (onlymac === 1) {
-            tmp = this.frw_CFB(messageInput, civ, keyInput, -1);
-            const MAC = this.textor(this.textor(tmp, civ), cmacInput);
+            temp = this.frw_CFB(messageInput, civ, keyInput, -1);
+            const MAC = this.textor(this.textor(temp, civ), cmacInput);
             const MSG = messageInput;
 
             return [assdataInput, ivInput, MSG, MAC];
         } else {
-            tmp = this.frw_CFB(messageInput, civ, keyInput, 1);
-            const m = tmp.substring(
+            temp = this.frw_CFB(messageInput, civ, keyInput, 1);
+            const m = temp.substring(
                 messageInput.length,
                 messageInput.length + 16,
             );
             const MAC = this.textor(this.textor(m, civ), cmacInput);
-            const MSG = tmp.substring(0, messageInput.length);
+            const MSG = temp.substring(0, messageInput.length);
 
             return [assdataInput, ivInput, MSG, MAC];
         }
@@ -532,7 +532,7 @@ export class lab5 {
                 tmpPacket[1].substring(12, 12 + 4),
             );
 
-            if (!(current > last)) {
+            if (!(current > BigInt(last))) {
                 continue;
             }
 
@@ -544,7 +544,7 @@ export class lab5 {
                     last = current;
                     recPacket[3] = "OK";
                 }
-            } else if (rdata[0] === "ВА" || mtype !== "ВБ") {
+            } else if (rdata[0] === "ВА" && mtype !== "ВБ") {
                 recPacket = this.EAX_CFB_inv(tmpPacket, keyset, secret, 1);
                 recPacket[2] = this.unpad_msg(recPacket[2]);
 
@@ -552,7 +552,7 @@ export class lab5 {
                     last = current;
                     recPacket[3] = "OK";
                 }
-            } else if (rdata[0] === "В_" || mtype === "В_") {
+            } else if (rdata[0] === "В_" && mtype === "В_") {
                 recPacket = tmpPacket;
                 recPacket[2] = this.unpad_msg(recPacket[2]);
 
@@ -626,25 +626,61 @@ export function consoleCheck() {
         8,
         lab.LFSR_SET(),
     );
-    const AD = ["ВБ", "БОБ___ЬЬ", "АЛИСА_ЯЗ", "ЭКЛАМПСИЯ"];
 
+    // // check frw_CFB and inv_CFB
+    // const iv1 = "АЛИСА_УМЕЕТ_ПЕТЬ";
+    // const frw = lab.frw_CFB(str[0], iv1, keys, 0);
+    // console.log(lab.inv_CFB(frw, iv1, keys, 0));
+
+    // // check EAX_CFB_frw and EAX_CFB_inv
+    // const AD = ["ВБ", "АЛИСА_АЖ", "БОБ___ОЧ", "ЕГИПТЯНИН", "АБВГД"];
+    // const packet = [AD, "БОБ_НЕМНОГО_ПЬЯН", str[0], ""];
+    // const cadInput = "ПОКА_ЕЩЕ_НЕВАЖНО";
+    // const secInput = "ТОЖЕ_ЕЩЕ_НЕВАЖНО";
+    // const cad = AD[0] + AD[1] + AD[2] + AD[3] + "_____";
+    // const cadmac = lab.frw_CFB(cad, secInput, keys, -1);
+
+    // const frw = lab.EAX_CFB_frw(packet, cadmac, keys, secInput, 1);
+    // const inv = lab.EAX_CFB_inv(frw, keys, secInput, 1);
+    // console.log(inv);
+
+    // check EAX_CFB
+    const AD = ["В_", "БОБ___ЬЬ", "АЛИСА_ЯЗ", "ЭКЛАМПСИЯ"];
+    const message = [str[0]];
     const channel = lab.EAX_CFB(
         AD,
-        str,
+        message,
         "СЕАНСОВЫЙ_КЛЮЧИК",
         "СЕМИХАТОВ_КВАНТЫ",
         "send",
     );
 
-    const transmission = lab.EAX_CFB(
+    const rec = lab.EAX_CFB(
         AD,
         channel,
         "СЕАНСОВЫЙ_КЛЮЧИК",
         "СЕМИХАТОВ_КВАНТЫ",
         "recieve",
     );
+    //console.log(rec);
 
-    console.log(transmission);
+    // const channel = lab.EAX_CFB(
+    //     AD,
+    //     str,
+    //     "СЕАНСОВЫЙ_КЛЮЧИК",
+    //     "СЕМИХАТОВ_КВАНТЫ",
+    //     "send",
+    // );
+
+    // const transmission = lab.EAX_CFB(
+    //     AD,
+    //     channel,
+    //     "СЕАНСОВЫЙ_КЛЮЧИК",
+    //     "СЕМИХАТОВ_КВАНТЫ",
+    //     "recieve",
+    // );
+
+    // console.log(transmission);
 
     // const iv1 = "АЛИСА_УМЕЕТ_ПЕТЬ";
 
