@@ -232,7 +232,7 @@ export class lab5 {
     prepare_packet(data, iv, msg)
     {
         var abc = new RusABC()
-        iv = "________________"+iv
+        iv = iv + "________________"
         msg = this.pad_msg(msg)
         var L = this.msg2bin(msg).length
         var a = ""
@@ -633,7 +633,7 @@ export function consoleCheck() {
     // console.log(lab.inv_CFB(frw, iv1, keys, 0));
 
     // // check EAX_CFB_frw and EAX_CFB_inv
-    // const AD = ["ВБ", "АЛИСА_АЖ", "БОБ___ОЧ", "ЕГИПТЯНИН", "АБВГД"];
+
     // const packet = [AD, "БОБ_НЕМНОГО_ПЬЯН", str[0], ""];
     // const cadInput = "ПОКА_ЕЩЕ_НЕВАЖНО";
     // const secInput = "ТОЖЕ_ЕЩЕ_НЕВАЖНО";
@@ -645,7 +645,8 @@ export function consoleCheck() {
     // console.log(inv);
 
     // check EAX_CFB
-    const AD = ["В_", "БОБ___ЬЬ", "АЛИСА_ЯЗ", "ЭКЛАМПСИЯ"];
+    // const AD = ["В_", "БОБ___ЬЬ", "АЛИСА_ЯЗ", "ЭКЛАМПСИЯ"];
+    const AD = ["ВБ", "АЛИСА_АЖ", "БОБ___ОЧ", "ЕГИПТЯНИН"];
     const message = [str[0]];
     const channel = lab.EAX_CFB(
         AD,
@@ -703,23 +704,20 @@ export function consoleCheck() {
     // const size = [32, 16];
 
     // console.log(lab.kdf(pass1, salt1, con, size, 2));
-    // const test = "ГНОЛЛЫ_ПИЛИЛИ_ПЫЛЕСОС_ЛОСОСЕМ";
-    // const textinputs = [];
-    // // читаем файл
-    // const data = fs.readFileSync("app/src/logic/inp.txt", "utf-8");
-    // // разбиваем на строки
-    // const lines = data.split("\n");
-    // lines.forEach((line) => {
-    //     textinputs.push(line);
-    // });
-    // const n = textinputs[1].replace(/\r/g, "");
-    // console.log(n.length);
-    // const nter = lab.pad_msg(n);
-    // console.log(lab.msg2bin(nter).length);
-    // const tmp = lab.check_padding(lab.msg2bin(nter));
-    // console.log(lab.unpad_msg(nter).length);
-    // const a1 = "ГОЛОВКА_КРУЖИТСЯ";
-    // const a2 = "МЫШКА_БЫЛА_ЛИХОЙ";
-    // console.log(lab.textor(a1, a2));
+    const test = "ГНОЛЛЫ_ПИЛИЛИ_ПЫЛЕСОС_ЛОСОСЕМ";
+    const textinputs = [];
+    // читаем файл
+    const data = fs.readFileSync("app/src/logic/inp.txt", "utf-8");
+    // разбиваем на строки
+    const lines = data.split("\n");
+    lines.forEach((line) => {
+        textinputs.push(line);
+    });
+    const n = textinputs[1].replace(/\r/g, "");
+    const assoc_data = ["ВА", "АЛИСА_А", "БОБ__А","КОТОПОЕЗД"]
+    const ytst = lab.prepare_packet(AD, "КОЛЕСО", textinputs[1].replace(/\r/g, ""));
+    const xtst = lab.receive(lab.transmit(ytst));
+    console.log(ytst);
+    console.log(xtst);
 }
 consoleCheck();
