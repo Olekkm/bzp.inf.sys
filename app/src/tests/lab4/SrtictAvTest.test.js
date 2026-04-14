@@ -1,4 +1,4 @@
-import { SPNet } from "../../logic/spNet";
+import { SPNet } from "../../logic/SPNet";
 import { RusABC } from "../../logic/abc";
 import fs from "fs";
 
